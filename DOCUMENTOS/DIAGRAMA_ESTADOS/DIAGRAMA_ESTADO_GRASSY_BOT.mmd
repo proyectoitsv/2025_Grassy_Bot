@@ -1,0 +1,25 @@
+
+stateDiagram
+  direction TB
+  [*] --> WaitingForTerrain
+  WaitingForTerrain --> MovingSequence:Terreno ingresado
+  MovingSequence --> Leans:Se inclina
+  Leans --> [*]:Apagar
+  MovingSequence --> ObstacleDetected:Obstaculo detectado
+  ObstacleDetected --> TracksOff:Apagado de las orugas
+  TracksOff --> ReturningSequence:Continuar secuencia
+  MovingSequence --> NoGrassDetected:Sin pasto detectado
+  NoGrassDetected --> BladeOff:Apagar cuchillas
+  BladeOff --> ReturningSequence:Continuar secuencia
+  ReturningSequence --> MovingSequence:Reanudar movimiento
+  MovingSequence --> FinishedMowing:Cortar cesped completo
+  FinishedMowing --> [*]:Apagado
+  WaitingForTerrain:Esperando el terreno
+  MovingSequence:Secuencia de movimiento
+  Leans:Se inclina
+  ObstacleDetected:Obstaculo detectado
+  TracksOff:Orugas apagadas
+  ReturningSequence:Secuencia de retorno
+  NoGrassDetected:Sin pasto detectado
+  BladeOff:Cuchillas apagadas
+  FinishedMowing:Terminar de cortar el cesped
