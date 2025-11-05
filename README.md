@@ -23,12 +23,17 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
 ##  Caracteristicas del Protoripo
 - ✅Terminado ⚠En Progreso ❌Sin Terminar
 - **Modo Manual**
-  -Movimientos (Tap):✅
-  -Movimientos (Keep):❌
-  -Switches de Sensores:⚠
+  - Movimientos (Tap):✅
+  - Movimientos (Keep):❌
+  - Switches de Sensores:⚠
 - **Modo Automatico**
-  -Algoritmo de Terreno:❌
-  -Calculo de Distancias:❌
-  -Botones de Control:❌
-  
-  -
+  - Algoritmo de Terreno:❌
+  - Calculo de Distancias:❌
+  - Botones de Control:❌
+- **GrassyBot**
+  - Movimiento de Motores:✅
+  - Sensor de Color:❌
+  - Sensores Ultrasonicos:⚠
+  - Giroscopio:⚠
+  - Brujula:❌
+  - GPS:❌
