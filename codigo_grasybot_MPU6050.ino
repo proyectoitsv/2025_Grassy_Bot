@@ -172,9 +172,9 @@ void leerSensores() {
 
   if (abs(roll) > 30 || abs(pitch) > 30) {
     // Se detectó inclinación mayor a 30 grados
-    digitalWrite(Motor, HIGH); // Apagar motor por seguridad
-    cuchilla = 0;
-    Serial.println("ALERTA: Inclinación detectada! Motor apagado");
+    digitalWrite(Motor, HIGH); 
+    cuchilla = 1;
+    Serial.println("ALERTA: Inclinación detectada! Motor encendido");
     Serial.print("Roll: "); Serial.print(roll);
     Serial.print(" Pitch: "); Serial.println(pitch);
   }
