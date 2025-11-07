@@ -1,12 +1,19 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <PCF8574.h>
+LiquidCrystal_I2C lcd(0x3f,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
+PCF8574 pcf8574(0x24);
 String receivedData = "";
 #define StepD 27
 #define StepI 13
 #define DirD 26
 #define DirI 14
 #define Motor 2
+#define SDA_PIN 21
+#define SCL_PIN 22
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
@@ -14,6 +21,8 @@ bool cuchilla = 0;
 int ancho = 0;
 int largo = 0;
 hw_timer_t *timer1 = NULL;
+
+bool Bandera1 = 0;
 
 
 // Declaraciones de funciones
@@ -27,13 +36,23 @@ void frente();
 void reversa();
 void zurdo();
 void diestro();
+void expansor();
 void IRAM_ATTR onTimer1();
 
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("Grassy Bot 0.6");
+  Wire.begin(SDA_PIN, SCL_PIN);
+  pcf8574.begin();
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0,0);
+  SerialBT.begin("Grassy Bot 0.7");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  
+  lcd.print(  "GrassyBot 7");
+  lcd.setCursor(0,1);
+  lcd.print(" Test LCD e I2C");
+  lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
@@ -55,9 +74,17 @@ void loop() {
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
+    lcd.setCursor(0,1);
+    lcd.print("Comando: ");
+    lcd.print(receivedData);
+    lcd.setCursor(12,1);
+    lcd.print("    ");
+    
 
     if (c == '\n') {
       receivedData.trim();
+      
+      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
@@ -215,17 +242,11 @@ void loop() {
 //TIMER VOIDS
   
   void IRAM_ATTR onTimer1() {
-    cuchilla = !cuchilla;
-    digitalWrite(Motor, cuchilla);
+    
   }
 
 //SENSORES
-void setup() {
-  // put your setup code here, to run once:
 
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-
-}
+  void expansor(){
+    
+  }
