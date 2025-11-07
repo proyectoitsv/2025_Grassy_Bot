@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
+#include <Wire.h>
+LiquidCrystal_I2C lcd(0x3f,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
 String receivedData = "";
 #define StepD 27
@@ -9,6 +10,8 @@ String receivedData = "";
 #define DirD 26
 #define DirI 14
 #define Motor 2
+#define SDA_PIN 21
+#define SCL_PIN 22
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
@@ -33,15 +36,17 @@ void IRAM_ATTR onTimer1();
 
 void setup() {
   Serial.begin(115200);
+  Wire.begin(SDA_PIN, SCL_PIN);
   lcd.init();
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
   SerialBT.begin("Grassy Bot 0.7");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 7")
+  lcd.print(  "GrassyBot 7");
   lcd.setCursor(0,1);
-  lcd.print(" Test LCD e I2C")
+  lcd.print(" Test LCD e I2C");
+  lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
@@ -62,12 +67,18 @@ void loop() {
   if (SerialBT.available()) {
     char c = SerialBT.read();
     receivedData += c;
+    Serial.write(c);
     lcd.setCursor(0,1);
-    lcd.print("Comando: ")
-    lcd.print(c);
+    lcd.print("Comando: ");
+    lcd.print(receivedData);
+    lcd.setCursor(12,1);
+    lcd.print("    ");
+    
 
     if (c == '\n') {
       receivedData.trim();
+      
+      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
