@@ -2,8 +2,10 @@
 #include <BluetoothSerial.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+#include <PCF8574.h>
 LiquidCrystal_I2C lcd(0x3f,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
+PCF8574 pcf8574(0x24);
 String receivedData = "";
 #define StepD 27
 #define StepI 13
@@ -20,6 +22,8 @@ int ancho = 0;
 int largo = 0;
 hw_timer_t *timer1 = NULL;
 
+bool Bandera1 = 0;
+
 
 // Declaraciones de funciones
 void avanzar(int repeticiones);
@@ -32,11 +36,13 @@ void frente();
 void reversa();
 void zurdo();
 void diestro();
+void expansor();
 void IRAM_ATTR onTimer1();
 
 void setup() {
   Serial.begin(115200);
   Wire.begin(SDA_PIN, SCL_PIN);
+  pcf8574.begin();
   lcd.init();
   lcd.backlight();
   lcd.clear();
@@ -240,3 +246,7 @@ void loop() {
   }
 
 //SENSORES
+
+  void expansor(){
+    
+  }
