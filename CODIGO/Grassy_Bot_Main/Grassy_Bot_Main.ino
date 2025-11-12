@@ -93,9 +93,17 @@ void loop() {
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
+    lcd.setCursor(0,1);
+    lcd.print("Comando: ");
+    lcd.print(receivedData);
+    lcd.setCursor(12,1);
+    lcd.print("    ");
+    
 
     if (c == '\n') {
       receivedData.trim();
+      
+      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
