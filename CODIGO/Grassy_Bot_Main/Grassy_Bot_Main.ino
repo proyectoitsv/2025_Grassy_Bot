@@ -29,8 +29,8 @@ float Mpul = pulsos / 400;  //Multi de pulsos
 float Mult = 400 / Mpasos;  //Multi de pasos
 float Dpaso = 17 * Mpul * Mult;  //Distancia del paso (8,5 cm)
 float GGiro = 45 * Mpul * Mult;  //Grados por giro (22.5 Grados)
-float Cpasos = 0;  //Cantidad de pasos para cubrir el largo
-float Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
+int Cpasos = 0;  //Cantidad de pasos para cubrir el largo
+int Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
 int plato = 17;
 float roll = 0;
 float pitch = 0;
@@ -52,6 +52,7 @@ void zurdo();
 void diestro();
 void expansor();
 void inclinacion();
+void calcularuta();
 void IRAM_ATTR onTimer1();
 
 void setup() {
@@ -139,48 +140,21 @@ void loop() {
         if (receivedData.startsWith("ANC")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          ancho = x * 100;
-
-          Cpasos = largo / Dpaso; 
-          Cvueltas = ancho / plato;
-
-          lcd.clear();
-          lcd.setCursor(0,0);
-          lcd.print("P: ");
-          lcd.print(Cpasos);
-          lcd.setCursor(9,0);
-          lcd.print("V: ");
-          lcd.print(Cvueltas);
-          lcd.setCursor(0,1);
-          lcd.print("A:");
-          lcd.print(ancho);
-          lcd.print(" L:");
-          lcd.print(largo);
+          
+          if(ancho == 0){
+            ancho = x * 100;
+            calcularuta();
+          }
+          
         }
         if (receivedData.startsWith("LAR")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          largo = x * 100;
-
-          Cpasos = largo / Dpaso; 
-          Cvueltas = ancho / plato;
-
-          Serial.println(Dpaso);
-          Serial.println(Cpasos);
-          Serial.println(Mpul);
-          Serial.println(Mult);
-          lcd.clear();
-          lcd.setCursor(0,0);
-          lcd.print("P: ");
-          lcd.print(Cpasos);
-          lcd.setCursor(9,0);
-          lcd.print("V: ");
-          lcd.print(Cvueltas);
-          lcd.setCursor(0,1);
-          lcd.print("A:");
-          lcd.print(ancho);
-          lcd.print(" L:");
-          lcd.print(largo);
+          
+          if(largo == 0){
+            largo = x * 100;
+            calcularuta();
+          }   
         }
         if (receivedData.startsWith("ESP")) {
           modo = 0;
@@ -241,6 +215,26 @@ void loop() {
     }
     for (int x = 0; x < repeticiones; x++) {
       giro();
+    }
+  }
+
+  void calcularuta(){
+
+    if(largo != 0 && ancho != 0){
+    Cpasos = round(largo / Dpaso); 
+    Cvueltas = round(ancho / plato);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("P: ");
+    lcd.print(Cpasos);
+    lcd.setCursor(9,0);
+    lcd.print("V: ");
+    lcd.print(Cvueltas);
+    lcd.setCursor(0,1);
+    lcd.print("A:");
+    lcd.print(ancho);
+    lcd.print(" L:");
+    lcd.print(largo);
     }
   }
 
