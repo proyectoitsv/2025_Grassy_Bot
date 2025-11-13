@@ -28,11 +28,11 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
   - Switches de Sensores:⚠
 - **Modo Automatico**
   - Algoritmo de Terreno:⚠
-  - Calculo de Distancias:⚠
-  - Botones de Control:❌
+  - Calculo de Distancias:✅
+  - Botones de Control:❌ (pau, cont, start, det,)
 - **GrassyBot**
   - Movimiento de Motores:✅
-  - Sensor de Color:❌
+  - Sensor de Color:⚠
   - Sensores Ultrasonicos:⚠
   - Giroscopio:✅
   - Brujula:❌
