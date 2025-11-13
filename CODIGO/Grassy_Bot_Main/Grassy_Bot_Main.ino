@@ -20,9 +20,18 @@ String receivedData = "";
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
-bool cuchilla = 0;
-int ancho = 0;
-int largo = 0;
+bool cuchilla = 0; //Activador Cuchilla
+int ancho = 0;  //Largo Modo Automatico
+int largo = 0;  //Largo Modo Automatico
+float pulsos = 200; //Pulsos Enviados a los pasos
+float Mpasos = 400; //Micropasos en los drivers
+float Mpul = pulsos / 400;  //Multi de pulsos
+float Mult = 400 / Mpasos;  //Multi de pasos
+float Dpaso = 17 * Mpul * Mult;  //Distancia del paso (8,5 cm)
+float GGiro = 45 * Mpul * Mult;  //Grados por giro (22.5 Grados)
+float Cpasos = 0;  //Cantidad de pasos para cubrir el largo
+float Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
+int plato = 17;
 float roll = 0;
 float pitch = 0;
 hw_timer_t *timer1 = NULL;
@@ -53,9 +62,9 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
-  SerialBT.begin("Grassy Bot 0.8");
+  SerialBT.begin("Grassy Bot 0.10");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 8");
+  lcd.print(  "GrassyBot 10");
   lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
@@ -79,31 +88,15 @@ void setup() {
 
 void loop() {
 
-//ZONA COMANDOS BLUETOOTH
 
-  inclinacion();
-  lcd.setCursor(0,1);
-  lcd.print("R: ");
-  lcd.print(roll);
-  lcd.print("P: ");
-  lcd.print(pitch);
-  lcd.print("      ");
 
-  if (SerialBT.available()) {
+  if (SerialBT.available()) { //ZONA COMANDOS BLUETOOTH
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
-    lcd.setCursor(0,1);
-    lcd.print("Comando: ");
-    lcd.print(receivedData);
-    lcd.setCursor(12,1);
-    lcd.print("    ");
-    
 
     if (c == '\n') {
       receivedData.trim();
-      
-      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
@@ -146,12 +139,48 @@ void loop() {
         if (receivedData.startsWith("ANC")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          ancho = x;
+          ancho = x * 100;
+
+          Cpasos = largo / Dpaso; 
+          Cvueltas = ancho / plato;
+
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("P: ");
+          lcd.print(Cpasos);
+          lcd.setCursor(9,0);
+          lcd.print("V: ");
+          lcd.print(Cvueltas);
+          lcd.setCursor(0,1);
+          lcd.print("A:");
+          lcd.print(ancho);
+          lcd.print(" L:");
+          lcd.print(largo);
         }
         if (receivedData.startsWith("LAR")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          largo = x;
+          largo = x * 100;
+
+          Cpasos = largo / Dpaso; 
+          Cvueltas = ancho / plato;
+
+          Serial.println(Dpaso);
+          Serial.println(Cpasos);
+          Serial.println(Mpul);
+          Serial.println(Mult);
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("P: ");
+          lcd.print(Cpasos);
+          lcd.setCursor(9,0);
+          lcd.print("V: ");
+          lcd.print(Cvueltas);
+          lcd.setCursor(0,1);
+          lcd.print("A:");
+          lcd.print(ancho);
+          lcd.print(" L:");
+          lcd.print(largo);
         }
         if (receivedData.startsWith("ESP")) {
           modo = 0;
@@ -218,7 +247,7 @@ void loop() {
 //MOVERSE
 
   void paso() {
-    for (int x = 0; x < 200; x++) {
+    for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
       delayMicroseconds(1000);
@@ -229,7 +258,7 @@ void loop() {
   }
 
   void giro() {
-    for (int x = 0; x < 200; x++) {
+    for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
       delayMicroseconds(1000);
