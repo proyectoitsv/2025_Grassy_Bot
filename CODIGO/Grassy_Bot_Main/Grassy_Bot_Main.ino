@@ -17,9 +17,10 @@ String receivedData = "";
 #define Motor 2
 #define SDA_PIN 21
 #define SCL_PIN 22
-#define S2 19
-#define S3 23
-#define sensorSalida 18
+#define SC2 19
+#define SC3 23
+#define SCOut 18
+
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
 bool cuchilla = 0;
@@ -27,8 +28,9 @@ int ancho = 0;
 int largo = 0;
 float roll = 0;
 float pitch = 0;
+int verde = 0;
 hw_timer_t *timer1 = NULL;
-int Verde_Frec = 0;
+
 bool Bandera1 = 0;
 
 
@@ -45,6 +47,7 @@ void zurdo();
 void diestro();
 void expansor();
 void inclinacion();
+void color();
 void IRAM_ATTR onTimer1();
 
 void setup() {
@@ -55,21 +58,22 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
-  SerialBT.begin("Grassy Bot 0.8");
+  SerialBT.begin("Grassy Bot 0.9");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 8");
+  lcd.print(  "GrassyBot 9");
   lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
   pinMode(DirI, OUTPUT);
   pinMode(Motor, OUTPUT);
-  pinMode(S0, OUTPUT);
-  pinMode(S1, OUTPUT);
-  pinMode(S2, OUTPUT);
-  pinMode(S3, OUTPUT);
-  pinMode(sensorSalida, INPUT);
-  
+  pinMode(SC2, OUTPUT);
+  pinMode(SC3, OUTPUT);
+  pinMode(SCOut, INPUT);
+
+  digitalWrite(SC2, HIGH);
+  digitalWrite(SC3, HIGH);
+
   if (!mpu.begin()) {
     lcd.setCursor(0,1);
     lcd.println(" MPU6050 Error  ");
@@ -82,40 +86,20 @@ void setup() {
   timerAttachInterrupt(timer1, &onTimer1);
   timerAlarm(timer1, 1000000ULL, true, 0);
   
-  // Configura la escala de Frecuencia en 20%
-  digitalWrite(S0, HIGH);
-  digitalWrite(S1, LOW);
-
-  Serial.begin(115200);
 }
 
 void loop() {
 
 //ZONA COMANDOS BLUETOOTH
 
-  inclinacion();
-  lcd.setCursor(0,1);
-  lcd.print("R: ");
-  lcd.print(roll);
-  lcd.print("P: ");
-  lcd.print(pitch);
-  lcd.print("      ");
-
+ 
   if (SerialBT.available()) {
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
-    lcd.setCursor(0,1);
-    lcd.print("Comando: ");
-    lcd.print(receivedData);
-    lcd.setCursor(12,1);
-    lcd.print("    ");
     
-
     if (c == '\n') {
       receivedData.trim();
-      
-      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
@@ -182,17 +166,6 @@ void loop() {
     }
   }
 
-  // Configura el filtor VERDE para tomar lectura
-  digitalWrite(S2, HIGH);
-  digitalWrite(S3, HIGH);
-  delay(100);
-  Verde_Frec = pulseIn(sensorSalida, LOW);
-  Serial.print(" V= ");
-  Serial.print(Verde_Frec);
-  delay(100);
-  
-  Serial.println("*");
-  delay(200);
 }
 
 
@@ -299,5 +272,9 @@ void loop() {
     mpu.getEvent(&a, &g, &temp);
     roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
     pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+  }
 
+  void color(){
+
+    verde = pulseIn(SCOut, LOW);
   }
