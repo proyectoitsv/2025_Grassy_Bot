@@ -17,6 +17,9 @@ String receivedData = "";
 #define Motor 2
 #define SDA_PIN 21
 #define SCL_PIN 22
+#define SC2 19
+#define SC3 23
+#define SCOut 18
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
@@ -28,12 +31,18 @@ float Mpasos = 400; //Micropasos en los drivers
 float Mpul = pulsos / 400;  //Multi de pulsos
 float Mult = 400 / Mpasos;  //Multi de pasos
 float Dpaso = 17 * Mpul * Mult;  //Distancia del paso (8,5 cm)
+int plato = 17;
 float GGiro = 45 * Mpul * Mult;  //Grados por giro (22.5 Grados)
+int CantGiro = 90 / GGiro;  //Cantidad de giros para hacer 90°
+int CantPaso = plato / Dpaso;  //Cantidad de pasos para el giro
 int Cpasos = 0;  //Cantidad de pasos para cubrir el largo
 int Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
-int plato = 17;
+int DGiro = 1;  //Direccion de Giro 1 DERECHA 2 IZQUIERDA
 float roll = 0;
 float pitch = 0;
+bool pausa = 0;
+bool automatico = 0;
+int verde = 0;
 hw_timer_t *timer1 = NULL;
 
 bool Bandera1 = 0;
@@ -52,7 +61,8 @@ void zurdo();
 void diestro();
 void expansor();
 void inclinacion();
-void calcularuta();
+void color();
+void Mautomatico();
 void IRAM_ATTR onTimer1();
 
 void setup() {
@@ -63,15 +73,21 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
-  SerialBT.begin("Grassy Bot 0.10");
+  SerialBT.begin("Grassy Bot 0.9");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 10");
+  lcd.print(  "GrassyBot 9");
   lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
   pinMode(DirI, OUTPUT);
   pinMode(Motor, OUTPUT);
+  pinMode(SC2, OUTPUT);
+  pinMode(SC3, OUTPUT);
+  pinMode(SCOut, INPUT);
+
+  digitalWrite(SC2, HIGH);
+  digitalWrite(SC3, HIGH);
 
   if (!mpu.begin()) {
     lcd.setCursor(0,1);
@@ -89,13 +105,15 @@ void setup() {
 
 void loop() {
 
+  if(automatico == 1){
+    Mautomatico();
+  }
 
-
-  if (SerialBT.available()) { //ZONA COMANDOS BLUETOOTH
+  if (SerialBT.available()) {  //ZONA COMANDOS BLUETOOTH
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
-
+    
     if (c == '\n') {
       receivedData.trim();
       
@@ -106,8 +124,11 @@ void loop() {
         if (receivedData.startsWith("AUT")) {
           modo = 2;
         }
+        if (receivedData.startsWith("ADM")) {
+          modo = 3;
+        }
       }
-      else if(modo == 1){
+      else if(modo == 1 || modo == 3){    //MODO MANUAL
         if (receivedData.startsWith("AVA")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
@@ -136,14 +157,14 @@ void loop() {
           modo = 0;
         }
       }
-      if(modo == 2){
+      if(modo == 2 || modo == 3){  //MODO AUTOMATICO
         if (receivedData.startsWith("ANC")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
           
           if(ancho == 0){
             ancho = x * 100;
-            calcularuta();
+            Mautomatico();
           }
           
         }
@@ -153,11 +174,23 @@ void loop() {
           
           if(largo == 0){
             largo = x * 100;
-            calcularuta();
+            Mautomatico();
           }   
         }
-        if (receivedData.startsWith("ESP")) {
-          modo = 0;
+        if (receivedData.startsWith("EMP")) {
+          automatico = 1;
+        }
+        if (receivedData.startsWith("PAU")) { 
+          pausa = 1;  
+        }
+        if (receivedData.startsWith("CON")) {
+          pausa = 0;
+        }
+        if (receivedData.startsWith("DET")) {
+          pausa = 0;
+          automatico = 0;
+          Cpasos = 0;
+          Cvueltas = 0;
         }
       }
       receivedData = "";
@@ -218,23 +251,65 @@ void loop() {
     }
   }
 
-  void calcularuta(){
+  void Mautomatico(){
 
-    if(largo != 0 && ancho != 0){
-    Cpasos = round(largo / Dpaso); 
-    Cvueltas = round(ancho / plato);
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("P: ");
-    lcd.print(Cpasos);
-    lcd.setCursor(9,0);
-    lcd.print("V: ");
-    lcd.print(Cvueltas);
-    lcd.setCursor(0,1);
-    lcd.print("A:");
-    lcd.print(ancho);
-    lcd.print(" L:");
-    lcd.print(largo);
+    if(automatico == 0){
+      if(largo != 0 && ancho != 0){
+      Cpasos = round(largo / Dpaso); 
+      Cvueltas = round(ancho / plato);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("P: ");
+      lcd.print(Cpasos);
+      lcd.setCursor(9,0);
+      lcd.print("V: ");
+      lcd.print(Cvueltas);
+      lcd.setCursor(0,1);
+      lcd.print("A:");
+      lcd.print(ancho);
+      lcd.print(" L:");
+      lcd.print(largo);
+      }
+    }
+    else if(automatico == 1){
+      if(pausa == 0){
+        if(Cvueltas > 1){
+          for(int i = 0;i < Cpasos;i++){
+            avanzar(1);
+          }
+          if(DGiro == 1){
+            for(int i = 0;i < CantGiro;i++){
+            derecha(1);
+            }
+            for(int i = 0;i < CantPaso;i++){
+            avanzar(1);
+            }
+            for(int i = 0;i < CantGiro;i++){
+            derecha(1);
+            }
+            DGiro = 2;
+          }
+          else if(DGiro == 2){
+            for(int i = 0;i < CantGiro;i++){
+            izquierda(1);
+            }
+            for(int i = 0;i < CantPaso;i++){
+            avanzar(1);
+            }
+            for(int i = 0;i < CantGiro;i++){
+            izquierda(1);
+            }
+            DGiro = 1;
+          }
+          Cvueltas--;
+        }
+        else{
+          pausa = 0;
+          automatico = 0;
+          Cpasos = 0;
+          Cvueltas = 0;
+        }
+      }
     }
   }
 
@@ -299,5 +374,9 @@ void loop() {
     mpu.getEvent(&a, &g, &temp);
     roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
     pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+  }
 
+  void color(){
+
+    verde = pulseIn(SCOut, LOW);
   }
