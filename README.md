@@ -36,6 +36,13 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
   - Sensor de Color:✅
   - Sensores Ultrasonicos:⚠
   - Giroscopio:✅
-  - Brujula:❌
-  - GPS:⚠
+  - Brujula:⚠
+  - GPS:✅
   - Nuevo Movimiento y sistema en tiempo real:❌
+  - Nuevas Orugas:❌
+  - Pintura:❌
+  - Stcikers!!!:❌
+  - Montar los sensores Exteriores:⚠
+  - Afiches, Pancartas:❌
+  - Elementos decorativos:❌
+  - Luces:❌
