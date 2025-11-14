@@ -17,7 +17,9 @@ String receivedData = "";
 #define Motor 2
 #define SDA_PIN 21
 #define SCL_PIN 22
-
+#define S2 19
+#define S3 23
+#define sensorSalida 18
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
 bool cuchilla = 0;
@@ -26,7 +28,7 @@ int largo = 0;
 float roll = 0;
 float pitch = 0;
 hw_timer_t *timer1 = NULL;
-
+int Verde_Frec = 0;
 bool Bandera1 = 0;
 
 
@@ -62,7 +64,12 @@ void setup() {
   pinMode(DirD, OUTPUT);
   pinMode(DirI, OUTPUT);
   pinMode(Motor, OUTPUT);
-
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorSalida, INPUT);
+  
   if (!mpu.begin()) {
     lcd.setCursor(0,1);
     lcd.println(" MPU6050 Error  ");
@@ -75,6 +82,11 @@ void setup() {
   timerAttachInterrupt(timer1, &onTimer1);
   timerAlarm(timer1, 1000000ULL, true, 0);
   
+  // Configura la escala de Frecuencia en 20%
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
+  Serial.begin(115200);
 }
 
 void loop() {
@@ -170,6 +182,17 @@ void loop() {
     }
   }
 
+  // Configura el filtor VERDE para tomar lectura
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+  delay(100);
+  Verde_Frec = pulseIn(sensorSalida, LOW);
+  Serial.print(" V= ");
+  Serial.print(Verde_Frec);
+  delay(100);
+  
+  Serial.println("*");
+  delay(200);
 }
 
 
