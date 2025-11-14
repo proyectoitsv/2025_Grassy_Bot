@@ -81,29 +81,14 @@ void loop() {
 
 //ZONA COMANDOS BLUETOOTH
 
-  inclinacion();
-  lcd.setCursor(0,1);
-  lcd.print("R: ");
-  lcd.print(roll);
-  lcd.print("P: ");
-  lcd.print(pitch);
-  lcd.print("      ");
-
+ 
   if (SerialBT.available()) {
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
-    lcd.setCursor(0,1);
-    lcd.print("Comando: ");
-    lcd.print(receivedData);
-    lcd.setCursor(12,1);
-    lcd.print("    ");
     
-
     if (c == '\n') {
-      receivedData.trim();
-      
-      
+      receivedData.trim()
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
