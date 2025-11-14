@@ -27,14 +27,15 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
   - Movimientos (Keep):❌
   - Switches de Sensores:⚠
 - **Modo Automatico**
-  - Algoritmo de Terreno:⚠
-  - Calculo de Distancias:⚠
-  - Botones de Control:❌
+  - Algoritmo de Terreno:✅
+  - Calculo de Distancias:✅
+  - Botones de Control:✅ (pau, cont, start, det,)
+  - Modo Automatico Tiempo Real:⚠
 - **GrassyBot**
   - Movimiento de Motores:✅
-  - Sensor de Color:❌
+  - Sensor de Color:✅
   - Sensores Ultrasonicos:⚠
   - Giroscopio:✅
   - Brujula:❌
-  - GPS:❌
+  - GPS:⚠
   - Nuevo Movimiento y sistema en tiempo real:❌
