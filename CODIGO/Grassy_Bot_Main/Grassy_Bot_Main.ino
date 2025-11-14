@@ -17,6 +17,9 @@ String receivedData = "";
 #define Motor 2
 #define SDA_PIN 21
 #define SCL_PIN 22
+#define SC2 19
+#define SC3 23
+#define SCOut 18
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
@@ -25,6 +28,7 @@ int ancho = 0;
 int largo = 0;
 float roll = 0;
 float pitch = 0;
+int verde = 0;
 hw_timer_t *timer1 = NULL;
 
 bool Bandera1 = 0;
@@ -43,6 +47,7 @@ void zurdo();
 void diestro();
 void expansor();
 void inclinacion();
+void color();
 void IRAM_ATTR onTimer1();
 
 void setup() {
@@ -53,15 +58,21 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
-  SerialBT.begin("Grassy Bot 0.8");
+  SerialBT.begin("Grassy Bot 0.9");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 8");
+  lcd.print(  "GrassyBot 9");
   lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
   pinMode(DirI, OUTPUT);
   pinMode(Motor, OUTPUT);
+  pinMode(SC2, OUTPUT);
+  pinMode(SC3, OUTPUT);
+  pinMode(SCOut, INPUT);
+
+  digitalWrite(SC2, HIGH);
+  digitalWrite(SC3, HIGH);
 
   if (!mpu.begin()) {
     lcd.setCursor(0,1);
@@ -88,7 +99,7 @@ void loop() {
     Serial.write(c);
     
     if (c == '\n') {
-      receivedData.trim()
+      receivedData.trim();
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
@@ -261,5 +272,9 @@ void loop() {
     mpu.getEvent(&a, &g, &temp);
     roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
     pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+  }
 
+  void color(){
+
+    verde = pulseIn(SCOut, LOW);
   }
