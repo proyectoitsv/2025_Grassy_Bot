@@ -1,19 +1,33 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <PCF8574.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+LiquidCrystal_I2C lcd(0x27,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
+PCF8574 pcf8574(0x24);
+Adafruit_MPU6050 mpu;
 String receivedData = "";
 #define StepD 27
 #define StepI 13
 #define DirD 26
 #define DirI 14
 #define Motor 2
+#define SDA_PIN 21
+#define SCL_PIN 22
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
 bool cuchilla = 0;
 int ancho = 0;
 int largo = 0;
+float roll = 0;
+float pitch = 0;
 hw_timer_t *timer1 = NULL;
+
+bool Bandera1 = 0;
 
 
 // Declaraciones de funciones
@@ -27,20 +41,36 @@ void frente();
 void reversa();
 void zurdo();
 void diestro();
+void expansor();
+void inclinacion();
 void IRAM_ATTR onTimer1();
 
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("Grassy Bot 0.6");
+  Wire.begin(SDA_PIN, SCL_PIN);
+  pcf8574.begin();
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0,0);
+  SerialBT.begin("Grassy Bot 0.8");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  
+  lcd.print(  "GrassyBot 8");
+  lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
   pinMode(DirD, OUTPUT);
   pinMode(DirI, OUTPUT);
   pinMode(Motor, OUTPUT);
 
-  //TIMER
+  if (!mpu.begin()) {
+    lcd.setCursor(0,1);
+    lcd.println(" MPU6050 Error  ");
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  
   timer1 = timerBegin(1000000); // frequency en Hz
   timerAttachInterrupt(timer1, &onTimer1);
   timerAlarm(timer1, 1000000ULL, true, 0);
@@ -51,13 +81,29 @@ void loop() {
 
 //ZONA COMANDOS BLUETOOTH
 
+  inclinacion();
+  lcd.setCursor(0,1);
+  lcd.print("R: ");
+  lcd.print(roll);
+  lcd.print("P: ");
+  lcd.print(pitch);
+  lcd.print("      ");
+
   if (SerialBT.available()) {
     char c = SerialBT.read();
     receivedData += c;
     Serial.write(c);
+    lcd.setCursor(0,1);
+    lcd.print("Comando: ");
+    lcd.print(receivedData);
+    lcd.setCursor(12,1);
+    lcd.print("    ");
+    
 
     if (c == '\n') {
       receivedData.trim();
+      
+      
       
       if(modo == 0){
         if (receivedData.startsWith("MAN")) {
@@ -212,20 +258,23 @@ void loop() {
     digitalWrite(DirI, LOW);
   }
 
-//TIMER VOIDS
+//TIMERS
   
   void IRAM_ATTR onTimer1() {
-    cuchilla = !cuchilla;
-    digitalWrite(Motor, cuchilla);
+    
   }
 
 //SENSORES
-void setup() {
-  // put your setup code here, to run once:
 
-}
+  void expansor(){
+    
+  }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+  void inclinacion(){
 
-}
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
+    pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+
+  }
