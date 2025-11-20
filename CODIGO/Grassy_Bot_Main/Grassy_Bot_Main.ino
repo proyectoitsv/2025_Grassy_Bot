@@ -38,6 +38,7 @@ int CantPaso = plato / Dpaso;  //Cantidad de pasos para el giro
 int Cpasos = 0;  //Cantidad de pasos para cubrir el largo
 int Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
 int DGiro = 1;  //Direccion de Giro 1 DERECHA 2 IZQUIERDA
+int dirkeep = 0; //1AVA 2REV 3DER 4IZQ
 float roll = 0;
 float pitch = 0;
 bool pausa = 0;
@@ -63,6 +64,10 @@ void expansor();
 void inclinacion();
 void color();
 void Mautomatico();
+void avanzarKeep();
+void retrocederKeep();
+void derechaKeep();
+void izquierdaKeep();
 void IRAM_ATTR onTimer1();
 
 void setup() {
@@ -73,9 +78,9 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
-  SerialBT.begin("Grassy Bot 0.9");
+  SerialBT.begin("Grassy Bot 0.10");
   Serial.println("Bluetooth iniciado. Listo para emparejar!");
-  lcd.print(  "GrassyBot 9");
+  lcd.print(  "GrassyBot 10");
   lcd.display();
   pinMode(StepD, OUTPUT);
   pinMode(StepI, OUTPUT);
@@ -108,6 +113,10 @@ void loop() {
   if(automatico == 1){
     Mautomatico();
   }
+  avanzarKeep();
+  retrocederKeep();
+  derechaKeep();
+  izquierdaKeep();
 
   if (SerialBT.available()) {  //ZONA COMANDOS BLUETOOTH
     char c = SerialBT.read();
@@ -133,6 +142,38 @@ void loop() {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
           avanzar(x);
+        }
+        if (receivedData.startsWith("AVK")) {
+          if(dirkeep == 1){
+            dirkeep = 0;
+          }
+          else{
+            dirkeep = 1;
+          }
+        }
+        if (receivedData.startsWith("REK")) {
+          if(dirkeep == 2){
+            dirkeep = 0;
+          }
+          else{
+            dirkeep = 2;
+          }
+        }
+        if (receivedData.startsWith("GDK")) {
+          if(dirkeep == 3){
+            dirkeep = 0;
+          }
+          else{
+            dirkeep = 3;
+          }
+        }
+        if (receivedData.startsWith("GIK")) {
+          if(dirkeep == 4){
+            dirkeep = 0;
+          }
+          else{
+            dirkeep = 4;
+          }
         }
         if (receivedData.startsWith("REV")) {
           String numeroStr = receivedData.substring(3);
@@ -217,7 +258,7 @@ void loop() {
       repeticiones = 1;
     }
     for (int x = 0; x < repeticiones; x++) {
-      paso();
+      paso(pulsos);
     }
   }
 
@@ -227,7 +268,7 @@ void loop() {
       repeticiones = 1;
     }
     for (int x = 0; x < repeticiones; x++) {
-      paso();
+      paso(pulsos);
     }
   }
 
@@ -237,7 +278,7 @@ void loop() {
       repeticiones = 1;
     }
     for (int x = 0; x < repeticiones; x++) {
-      giro();
+      giro(pulsos);
     }
   }
 
@@ -247,7 +288,35 @@ void loop() {
       repeticiones = 1;
     }
     for (int x = 0; x < repeticiones; x++) {
-      giro();
+      giro(pulsos);
+    }
+  }
+  
+  void avanzarKeep() {
+    frente();
+    if(dirkeep == 1){
+    paso(1);
+    }
+  }
+
+  void retrocederKeep() {
+    reversa();
+    if(dirkeep == 2){
+    paso(1);
+    }
+  }
+
+  void derechaKeep() {
+    diestro();
+    if(dirkeep == 3){
+    giro(1);
+    }
+  }
+
+  void izquierdaKeep() {
+    zurdo();
+    if(dirkeep == 4){
+    giro(1);
     }
   }
 
@@ -274,6 +343,7 @@ void loop() {
     else if(automatico == 1){
       if(pausa == 0){
         if(Cvueltas > 1){
+          digitalWrite(Motor, HIGH);
           for(int i = 0;i < Cpasos;i++){
             avanzar(1);
           }
@@ -308,6 +378,7 @@ void loop() {
           automatico = 0;
           Cpasos = 0;
           Cvueltas = 0;
+          digitalWrite(Motor, LOW);
         }
       }
     }
@@ -315,7 +386,7 @@ void loop() {
 
 //MOVERSE
 
-  void paso() {
+  void paso(int pulsos) {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
@@ -326,7 +397,7 @@ void loop() {
     }
   }
 
-  void giro() {
+  void giro(int pulsos) {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
