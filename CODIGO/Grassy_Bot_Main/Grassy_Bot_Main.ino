@@ -143,6 +143,31 @@ void loop() {
           int x = numeroStr.toInt();
           avanzar(x);
         }
+        if (receivedData.startsWith("REV")) {
+          String numeroStr = receivedData.substring(3);
+          int x = numeroStr.toInt();
+          retroceder(x);
+        }
+        if (receivedData.startsWith("DER")) {
+          String numeroStr = receivedData.substring(3);
+          int x = numeroStr.toInt();
+          derecha(x);
+        }
+        if (receivedData.startsWith("IZQ")) {
+          String numeroStr = receivedData.substring(3);
+          int x = numeroStr.toInt();
+          izquierda(x);
+        }
+        if (receivedData.startsWith("DID")) {
+          for(int i = 0;i < CantGiro/2;i++){
+            derecha(1);
+          };
+        }
+        if (receivedData.startsWith("DII")) {
+          for(int i = 0;i < CantGiro/2;i++){
+            izquierda(1);
+          };
+        }
         if (receivedData.startsWith("AVK")) {
           if(dirkeep == 1){
             dirkeep = 0;
@@ -174,21 +199,6 @@ void loop() {
           else{
             dirkeep = 4;
           }
-        }
-        if (receivedData.startsWith("REV")) {
-          String numeroStr = receivedData.substring(3);
-          int x = numeroStr.toInt();
-          retroceder(x);
-        }
-        if (receivedData.startsWith("DER")) {
-          String numeroStr = receivedData.substring(3);
-          int x = numeroStr.toInt();
-          derecha(x);
-        }
-        if (receivedData.startsWith("IZQ")) {
-          String numeroStr = receivedData.substring(3);
-          int x = numeroStr.toInt();
-          izquierda(x);
         }
         if (receivedData.startsWith("MOT")) {
           cuchilla = !cuchilla;
