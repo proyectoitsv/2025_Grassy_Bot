@@ -39,6 +39,8 @@ int Cpasos = 0;  //Cantidad de pasos para cubrir el largo
 int Cvueltas = 0;  //Cantidad de giros para cubrir el ancho
 int DGiro = 1;  //Direccion de Giro 1 DERECHA 2 IZQUIERDA
 int dirkeep = 0; //1AVA 2REV 3DER 4IZQ
+float progreso = 0;
+float progresoact = 0;
 float roll = 0;
 float pitch = 0;
 bool pausa = 0;
@@ -242,6 +244,7 @@ void loop() {
           automatico = 0;
           Cpasos = 0;
           Cvueltas = 0;
+          digitalWrite(Motor, LOW);
         }
       }
       receivedData = "";
@@ -249,13 +252,15 @@ void loop() {
     }
   }
 
-  if (Serial.available()) {//Mandar Serial por BT
+  SerialBT.write(progresoact);
+
+  /*if (Serial.available()) {//Mandar Serial por BT
     char c = Serial.read();
     SerialBT.write(c);
     if (c == '\n') {
       SerialBT.flush();
     }
-  }
+  }*/
 
 }
 
@@ -336,6 +341,7 @@ void loop() {
       if(largo != 0 && ancho != 0){
       Cpasos = round(largo / Dpaso); 
       Cvueltas = round(ancho / plato);
+      progreso = 100 / (Cpasos * (Cvueltas - 1));
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("P: ");
@@ -356,6 +362,7 @@ void loop() {
           digitalWrite(Motor, HIGH);
           for(int i = 0;i < Cpasos;i++){
             avanzar(1);
+            progresoact == progresoact + progreso;
           }
           if(DGiro == 1){
             for(int i = 0;i < CantGiro;i++){
@@ -391,6 +398,9 @@ void loop() {
           digitalWrite(Motor, LOW);
         }
       }
+      else{
+      digitalWrite(Motor, LOW);
+      }
     }
   }
 
@@ -400,10 +410,10 @@ void loop() {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
-      delayMicroseconds(1000);
+      delayMicroseconds(500);
       digitalWrite(StepD, LOW);
       digitalWrite(StepI, LOW);
-      delayMicroseconds(1000);
+      delayMicroseconds(500);
     }
   }
 
@@ -411,10 +421,10 @@ void loop() {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
-      delayMicroseconds(1000);
+      delayMicroseconds(500);
       digitalWrite(StepD, LOW);
       digitalWrite(StepI, LOW);
-      delayMicroseconds(1000);
+      delayMicroseconds(500);
     }
   }
 
