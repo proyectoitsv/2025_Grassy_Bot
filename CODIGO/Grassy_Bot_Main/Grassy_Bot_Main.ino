@@ -20,16 +20,21 @@ String receivedData = "";
 #define SC2 19
 #define SC3 23
 #define SCOut 18
+#define triggers 32
+#define USD 33 //1 
+#define USA 25 //3
+#define USI 4 //4
+#define USF 5 //2
 
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
 bool cuchilla = 0; //Activador Cuchilla
 int ancho = 0;  //Largo Modo Automatico
 int largo = 0;  //Largo Modo Automatico
-float pulsos = 200; //Pulsos Enviados a los pasos
-float Mpasos = 400; //Micropasos en los drivers
-float Mpul = pulsos / 400;  //Multi de pulsos
-float Mult = 400 / Mpasos;  //Multi de pasos
+int pulsos = 200;  //Pulsos Enviados a los pasos
+int Mpasos = 400;  //Micropasos en los drivers
+float Mpul = float(pulsos) / 400.0;  //Multi de pulsos
+float Mult = 400.0 / float(Mpasos);  //Multi de pasos
 float Dpaso = 17 * Mpul * Mult;  //Distancia del paso (8,5 cm)
 int plato = 17;
 float GGiro = 45 * Mpul * Mult;  //Grados por giro (22.5 Grados)
@@ -45,10 +50,31 @@ float roll = 0;
 float pitch = 0;
 bool pausa = 0;
 bool automatico = 0;
+bool flagUS = 0;
 int verde = 0;
+bool contar = 0;
+int ordenUS = 1;
+float distanciaD = 0;
+float distanciaF = 0;
+float distanciaI = 0;
+float distanciaA = 0;
+uint32_t duracionD = 0;
+uint32_t duracionF = 0;
+uint32_t duracionI = 0;
+uint32_t duracionA = 0;
+volatile unsigned long startPulse = 0;
+volatile unsigned long endPulse = 0;
+volatile bool ready = false;
 hw_timer_t *timer1 = NULL;
-
-bool Bandera1 = 0;
+String cola = "";
+char letra ;
+bool moviendose = 0;
+char comando;
+int movpulsos = 0;
+volatile bool iniciarUS = false;   
+bool pulsoOn = false;            
+uint64_t tiempoPulso = 0;   
+uint64_t t_now = 0;
 
 
 // Declaraciones de funciones
@@ -56,8 +82,8 @@ void avanzar(int repeticiones);
 void retroceder(int repeticiones);
 void derecha(int repeticiones);
 void izquierda(int repeticiones);
-void paso();
-void giro();
+void paso(int pulsos);
+void giro(int pulsos);
 void frente();
 void reversa();
 void zurdo();
@@ -70,7 +96,13 @@ void avanzarKeep();
 void retrocederKeep();
 void derechaKeep();
 void izquierdaKeep();
+void Ultrasonicos();
 void IRAM_ATTR onTimer1();
+void IRAM_ATTR echoISR();
+void avanzarN();
+void retrocederN();
+void derechaN();
+void izquierdaN();
 
 void setup() {
   Serial.begin(115200);
@@ -92,9 +124,16 @@ void setup() {
   pinMode(SC2, OUTPUT);
   pinMode(SC3, OUTPUT);
   pinMode(SCOut, INPUT);
+  pinMode(triggers, OUTPUT);
+  pinMode(USD, INPUT);
+  pinMode(USF, INPUT);
+  pinMode(USI, INPUT);
+  pinMode(USA, INPUT); 
 
   digitalWrite(SC2, HIGH);
   digitalWrite(SC3, HIGH);
+  digitalWrite(triggers, LOW);
+
 
   if (!mpu.begin()) {
     lcd.setCursor(0,1);
@@ -105,12 +144,44 @@ void setup() {
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   
   timer1 = timerBegin(1000000); // frequency en Hz
-  timerAttachInterrupt(timer1, &onTimer1);
-  timerAlarm(timer1, 1000000ULL, true, 0);
   
+  timerAttachInterrupt(timer1, &onTimer1);
+  timerAlarm(timer1, 100000ULL, true, 0);
+
+  attachInterrupt(digitalPinToInterrupt(USD), echoISR, CHANGE);
+
 }
 
 void loop() {
+
+  unsigned long t = micros();
+
+    // generar trigger sin delay
+    if (iniciarUS) {
+        iniciarUS = false;
+        digitalWrite(triggers, HIGH);
+        pulsoOn = true;
+        tiempoPulso = t;
+    }
+
+    if (pulsoOn && (t - tiempoPulso >= 10)) {
+        digitalWrite(triggers, LOW);
+        pulsoOn = false;
+    }
+
+    // procesar lectura
+    if (ready) {
+        ready = false;
+
+        unsigned long duracion = endPulse - startPulse;
+
+        float distanciaD = duracion * 0.0343f / 2.0f;
+
+        // tu condición corregida
+        if (distanciaD > 2 && distanciaD < 10) {
+            avanzar(1);
+        } 
+    }
 
   if(automatico == 1){
     Mautomatico();
@@ -143,22 +214,47 @@ void loop() {
         if (receivedData.startsWith("AVA")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          avanzar(x);
+          if(x == 0){
+            x = 1;
+          }
+          for(int i = 0;i < x;i++){
+            letra = 'A';
+            cola += letra;
+          };
+          
         }
         if (receivedData.startsWith("REV")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          retroceder(x);
+          if(x == 0){
+            x = 1;
+          }
+          for(int i = 0;i < x;i++){
+            letra = 'R';
+            cola += letra;
+          };
         }
         if (receivedData.startsWith("DER")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          derecha(x);
+          if(x == 0){
+            x = 1;
+          }
+          for(int i = 0;i < x;i++){
+            letra = 'D';
+            cola += letra;
+          };
         }
         if (receivedData.startsWith("IZQ")) {
           String numeroStr = receivedData.substring(3);
           int x = numeroStr.toInt();
-          izquierda(x);
+          if(x == 0){
+            x = 1;
+          }
+          for(int i = 0;i < x;i++){
+            letra = 'I';
+            cola += letra;
+          };
         }
         if (receivedData.startsWith("DID")) {
           for(int i = 0;i < CantGiro/2;i++){
@@ -252,7 +348,33 @@ void loop() {
     }
   }
 
-  SerialBT.write(progresoact);
+  if (cola.length() > 0 && moviendose == 0) {
+    comando = cola[0];
+    movpulsos = pulsos;
+    moviendose = 1;
+    cola.remove(0, 1);   // Eliminar la primera letra (shift)
+  }
+
+  if(movpulsos > 0){
+    if(comando == 'A'){
+      avanzarN();
+    }
+    else if(comando == 'R'){
+      retrocederN();
+    }
+    else if(comando == 'I'){
+      izquierdaN();
+    }
+    else if(comando == 'D'){
+      derechaN();
+    }
+    movpulsos--;
+  }
+  if(movpulsos == 0){
+    moviendose = 0;
+  }
+
+  //SerialBT.print(progresoact);
 
   /*if (Serial.available()) {//Mandar Serial por BT
     char c = Serial.read();
@@ -306,34 +428,15 @@ void loop() {
       giro(pulsos);
     }
   }
-  
-  void avanzarKeep() {
-    frente();
-    if(dirkeep == 1){
-    paso(1);
-    }
-  }
 
-  void retrocederKeep() {
-    reversa();
-    if(dirkeep == 2){
-    paso(1);
-    }
-  }
-
-  void derechaKeep() {
-    diestro();
-    if(dirkeep == 3){
-    giro(1);
-    }
-  }
-
-  void izquierdaKeep() {
-    zurdo();
-    if(dirkeep == 4){
-    giro(1);
-    }
-  }
+  void avanzarN() { frente(); paso(1); }
+  void retrocederN() { reversa(); paso(1); }
+  void izquierdaN() { zurdo(); giro(1); }
+  void derechaN() { diestro(); giro(1); }
+  void avanzarKeep() { frente(); if (dirkeep == 1) paso(1); }
+  void retrocederKeep() { reversa(); if (dirkeep == 2) paso(1); }
+  void derechaKeep() { diestro(); if (dirkeep == 3) giro(1); }
+  void izquierdaKeep() { zurdo(); if (dirkeep == 4) giro(1); }
 
   void Mautomatico(){
 
@@ -362,7 +465,7 @@ void loop() {
           digitalWrite(Motor, HIGH);
           for(int i = 0;i < Cpasos;i++){
             avanzar(1);
-            progresoact == progresoact + progreso;
+            progresoact = progresoact + progreso;
           }
           if(DGiro == 1){
             for(int i = 0;i < CantGiro;i++){
@@ -410,10 +513,10 @@ void loop() {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
-      delayMicroseconds(500);
+      delayMicroseconds(1000);
       digitalWrite(StepD, LOW);
       digitalWrite(StepI, LOW);
-      delayMicroseconds(500);
+      delayMicroseconds(1000);
     }
   }
 
@@ -421,42 +524,46 @@ void loop() {
     for (int x = 0; x < pulsos; x++) {
       digitalWrite(StepD, HIGH);
       digitalWrite(StepI, HIGH);
-      delayMicroseconds(500);
+      delayMicroseconds(1000);
       digitalWrite(StepD, LOW);
       digitalWrite(StepI, LOW);
-      delayMicroseconds(500);
+      delayMicroseconds(1000);
     }
   }
 
 //DIRECCIONES
 
-  void frente() {
-    digitalWrite(DirD, HIGH);
-    digitalWrite(DirI, LOW);
-  }
-  void reversa() {
-    digitalWrite(DirD, LOW);
-    digitalWrite(DirI, HIGH);
-  }
-  void zurdo() {
-    digitalWrite(DirD, HIGH);
-    digitalWrite(DirI, HIGH);
-  }
-  void diestro() {
-    digitalWrite(DirD, LOW);
-    digitalWrite(DirI, LOW);
-  }
+  void frente() { digitalWrite(DirD, HIGH);digitalWrite(DirI, LOW);}
+  void reversa() {digitalWrite(DirD, LOW);digitalWrite(DirI, HIGH); }
+  void zurdo() {digitalWrite(DirD, HIGH);digitalWrite(DirI, HIGH);}
+  void diestro() {digitalWrite(DirD, LOW);digitalWrite(DirI, LOW);}
 
-//TIMERS
+//INTERRUPCIONES
   
   void IRAM_ATTR onTimer1() {
-    
+    iniciarUS = 1;
   }
+
+  void IRAM_ATTR echoISR() {
+    if (digitalRead(USD)) {
+        startPulse = micros();     // flanco ascendente
+    } else {
+        endPulse = micros();       // flanco descendente
+        ready = true;              // hay nueva lectura
+    }
+}
 
 //SENSORES
 
   void expansor(){
     
+  }
+  void Ultrasonicos(){
+
+    digitalWrite(triggers, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(triggers, LOW);
+
   }
 
   void inclinacion(){
@@ -469,5 +576,5 @@ void loop() {
 
   void color(){
 
-    verde = pulseIn(SCOut, LOW);
+    verde = pulseIn(SCOut, LOW, 20000); // 20 ms
   }
