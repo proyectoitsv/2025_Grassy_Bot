@@ -179,7 +179,7 @@ void loop() {
 
         // tu condición corregida
         if (distanciaD > 2 && distanciaD < 10) {
-            avanzar(1);
+            //avanzar(1);
         } 
     }
 
@@ -558,11 +558,8 @@ void loop() {
   void expansor(){
     
   }
+  
   void Ultrasonicos(){
-
-    digitalWrite(triggers, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(triggers, LOW);
 
   }
 
