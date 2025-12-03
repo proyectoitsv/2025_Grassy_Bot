@@ -5,11 +5,15 @@
 #include <PCF8574.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
+#include <TinyGPS++.h>
+#include <HardwareSerial.h>
+
 LiquidCrystal_I2C lcd(0x27,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
 PCF8574 pcf8574(0x24);
 Adafruit_MPU6050 mpu;
 String receivedData = "";
+
 #define StepD 27
 #define StepI 13
 #define DirD 26
@@ -21,6 +25,8 @@ String receivedData = "";
 #define SC3 23
 #define SCOut 18
 
+TinyGPSPlus gps;
+HardwareSerial gpsSerial(2);  // UART0 (Serial por defecto)
 
 int modo = 0; //0 Esperando /1 Manual /2 Automatico
 bool cuchilla = 0; //Activador Cuchilla
@@ -50,6 +56,18 @@ hw_timer_t *timer1 = NULL;
 
 bool Bandera1 = 0;
 
+// UBICACIÓN OBJETIVO - Se define automáticamente al encender
+double LAT_OBJETIVO = 0.0;  
+double LON_OBJETIVO = 0.0;
+const float DISTANCIA_MAX = 25.0;  // Distancia máxima en metros
+bool objetivoDefinido = false;
+
+// Variables de estado
+bool dentroDeRango = true;
+unsigned long ultimaLectura = 0;
+const unsigned long INTERVALO_LECTURA = 1000;  // Leer GPS cada 1 segundo
+const unsigned long TIEMPO_ESPERA_INICIAL = 10000; // 10 segundos de espera
+
 
 // Declaraciones de funciones
 void avanzar(int repeticiones);
@@ -71,9 +89,14 @@ void retrocederKeep();
 void derechaKeep();
 void izquierdaKeep();
 void IRAM_ATTR onTimer1();
+void gpss();
+double calcularDistancia();
+void bucleSeguridad();
+
 
 void setup() {
   Serial.begin(115200);
+  gpsSerial.begin(9600, SERIAL_8N1, 17, 16); // baud, config, RX=17, TX=16
   Wire.begin(SDA_PIN, SCL_PIN);
   pcf8574.begin();
   lcd.init();
@@ -107,9 +130,16 @@ void setup() {
   timer1 = timerBegin(1000000); // frequency en Hz
   timerAttachInterrupt(timer1, &onTimer1);
   timerAlarm(timer1, 1000000ULL, true, 0);
+
+   unsigned long tiempoInicio = millis();
+  while (millis() - tiempoInicio < TIEMPO_ESPERA_INICIAL) {
+    // Leer GPS durante la espera para calentar el módulo
+    while (gpsSerial.available() > 0) {
+      gps.encode(gpsSerial.read());
+    }
   
 }
-
+}
 void loop() {
 
   if(automatico == 1){
@@ -471,3 +501,107 @@ void loop() {
 
     verde = pulseIn(SCOut, LOW);
   }
+
+void gpss() {
+  // Leer datos del GPS
+  while (gpsSerial.available() > 0) {
+    gps.encode(gpsSerial.read());
+  }
+  
+  // Verificar si hay una nueva ubicación válida
+  if (gps.location.isUpdated()) {
+    unsigned long ahora = millis();
+    
+    if (ahora - ultimaLectura >= INTERVALO_LECTURA) {
+      ultimaLectura = ahora;
+      
+      double latActual = gps.location.lat();
+      double lonActual = gps.location.lng();
+      
+      // Calcular distancia usando la fórmula de Haversine
+      double distancia = calcularDistancia(LAT_OBJETIVO, LON_OBJETIVO, 
+                                           latActual, lonActual);
+      
+      // Mostrar información en el monitor serial
+      Serial.println("--------------------------------");
+      Serial.print("Ubicación actual: ");
+      Serial.print(latActual, 6);
+      Serial.print(", ");
+      Serial.println(lonActual, 6);
+      Serial.print("Distancia al objetivo: ");
+      Serial.print(distancia, 2);
+      Serial.println(" metros");
+      Serial.print("Satélites: ");
+      Serial.println(gps.satellites.value());
+      
+      // VERIFICAR DISTANCIA
+      if (distancia > DISTANCIA_MAX) {
+        Serial.println();
+        Serial.println("⚠️  ALERTA: FUERA DE RANGO! ⚠️");
+        Serial.println("Entrando en bucle de seguridad...");
+        Serial.println();
+        
+        // BUCLE INFINITO - El sistema se detiene aquí
+        bucleSeguridad(distancia);
+      } else {
+        Serial.println("✓ Dentro del rango permitido");
+      }
+      
+      Serial.println("--------------------------------");
+      Serial.println();
+    }
+  }
+  
+  // Verificar si el GPS tiene buena señal
+  if (millis() > 15000 && gps.charsProcessed() < 10) {
+    Serial.println("⚠️  No se detecta señal GPS. Verifica las conexiones.");
+    delay(5000);
+  }
+}
+
+// Función que calcula la distancia entre dos puntos GPS usando Haversine
+double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
+  const double R = 6371000; // Radio de la Tierra en metros
+  
+  double phi1 = lat1 * PI / 180.0;
+  double phi2 = lat2 * PI / 180.0;
+  double deltaPhi = (lat2 - lat1) * PI / 180.0;
+  double deltaLambda = (lon2 - lon1) * PI / 180.0;
+  
+  double a = sin(deltaPhi / 2.0) * sin(deltaPhi / 2.0) +
+             cos(phi1) * cos(phi2) *
+             sin(deltaLambda / 2.0) * sin(deltaLambda / 2.0);
+  
+  double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
+  
+  return R * c;  // Distancia en metros
+}
+
+// BUCLE DE SEGURIDAD - El ESP32 queda atrapado aquí
+void bucleSeguridad(double distanciaActual) {
+  pinMode(Motor, OUTPUT);  // Usar LED integrado para indicar alerta
+  
+  while (true) {  // BUCLE INFINITO
+    // Parpadear LED como indicador visual
+    digitalWrite(Motor, HIGH);
+    delay(200);
+    digitalWrite(Motor, LOW);
+    delay(200);
+    
+    // Mensaje continuo en el monitor serial
+    Serial.println("⛔ SISTEMA BLOQUEADO ⛔");
+    Serial.print("Distancia detectada: ");
+    Serial.print(distanciaActual, 2);
+    Serial.println(" metros");
+    Serial.print("Se excedió el límite de ");
+    Serial.print(DISTANCIA_MAX);
+    Serial.println(" metros");
+    Serial.println("Reinicie el dispositivo para continuar");
+    Serial.println();
+    
+    delay(2000);
+    
+    // El sistema NUNCA sale de este bucle
+    // Solo se puede salir reiniciando el ESP32
+  }
+}
