@@ -4,21 +4,41 @@ sequenceDiagram
   participant Sensors as Sensores
 
   User ->>+ Mower: se prende
-  Mower ->> User: espera la informacion del tamaño del terreno
-  User ->> Mower: se sube la informacion del tamaño del terreno
-  loop secuencia de movimiento
-    Mower ->> Sensors: se mueve
-    Sensors -->> Mower: informacion de movimiento
+  loop Modo autonomo
+      
+   Mower ->> User: espera la informacion del tamaño del terreno
+   User ->> Mower: se sube la informacion del tamaño del terreno
+   loop secuencia de movimiento
+     Mower ->> Sensors: se mueve
+     Sensors -->> Mower: informacion de movimiento
+   end
+   alt angulo inusual detectado
+     Sensors -->> Mower: alerta de angulo inusual
+     Mower ->> Mower: apagarse
+   else Obstaculo detectado
+     Sensors -->> Mower: alerta de obstaculo
+     Mower ->> Mower: esquivar obstaculo
+   else pasto no detectado
+     Sensors -->> Mower: alerta de pasto no detectado
+     Mower ->> Mower: Apagar cuchillas
+   else lo levantan del suelo 
+     Sensors -->> Mower: no esta en el suelo
+     Mower ->> Mower: apagarse
+   end
+   Sensors ->> Mower: Datos de brujula y GPS
+   Mower ->>- User: Tarea completada, Apagar
   end
-  alt angulo inusual detectado
-    Sensors -->> Mower: alerta de angulo inusual
-    Mower ->> Mower: apagarse
-  else Obstaculo detectado
-    Sensors -->> Mower: alerta de obstaculo
-    Mower ->> Mower: esquivar obstaculo
-  else pasto no detectado
-    Sensors -->> Mower: alerta de pasto no detectado
-    Mower ->> Mower: Apagar cuchillas
+ loop Modo manual
+   User ->>+ Mower: se prende
+   User ->>+ Mower: manda las direcciones
+   alt Obstaculo detectado
+     Sensors -->> Mower: alerta de obstaculo
+    else lo levantan del suelo 
+     Sensors -->> Mower: no esta en el suelo
+     Mower ->> Mower: apagarse
+    else angulo inusual detectado
+     Sensors -->> Mower: alerta de angulo inusual
+     Mower ->> Mower: apagarse
+   end 
+   Mower ->>- User: Tarea completada, Apagar
   end
-  Sensors ->> Mower: Datos de brujula y GPS
-  Mower ->>- User: Tarea completada, Apagar

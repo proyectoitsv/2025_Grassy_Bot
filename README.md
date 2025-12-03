@@ -24,7 +24,7 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
 - ✅Terminado ⚠En Progreso ❌Sin Terminar
 - **Modo Manual**
   - Movimientos (Tap):✅
-  - Movimientos (Keep):❌
+  - Movimientos (Keep):✅
   - Switches de Sensores:⚠
 - **Modo Automatico**
   - Algoritmo de Terreno:✅
@@ -36,6 +36,14 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
   - Sensor de Color:✅
   - Sensores Ultrasonicos:⚠
   - Giroscopio:✅
-  - Brujula:❌
+  - Brujula:⚠
   - GPS:⚠
   - Nuevo Movimiento y sistema en tiempo real:❌
+  - Nuevas Orugas:⚠
+  - Pintura:❌
+  - Stcikers!!!:❌
+  - Montar los sensores Exteriores:⚠
+  - Afiches, Pancartas:❌
+  - Elementos decorativos:❌
+  - Luces:❌
+  - Video Publicitario:❌
