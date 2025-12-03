@@ -4,10 +4,12 @@
 #include <Wire.h>
 #include <PCF8574.h>
 #include <Adafruit_MPU6050.h>
+#include <Adafruit_HMC5883_U.h>
 #include <Adafruit_Sensor.h>
 LiquidCrystal_I2C lcd(0x27,16,2); // si no te sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
 BluetoothSerial SerialBT;
 PCF8574 pcf8574(0x24);
+Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
 Adafruit_MPU6050 mpu;
 String receivedData = "";
 #define StepD 27
@@ -471,3 +473,15 @@ void loop() {
 
     verde = pulseIn(SCOut, LOW);
   }
+
+  float BRUJULA() {
+  sensors_event_t event;
+  mag.getEvent(&event);
+
+  float heading = atan2(event.magnetic.y, event.magnetic.x);
+
+  if (heading < 0)
+    heading += 2 * PI;
+
+  return heading * 180 / PI;
+}
