@@ -171,72 +171,9 @@ void loop() {
 
   unsigned long t = micros();
 
-  // generar trigger sin delay
-  if (iniciarUS) {
-    iniciarUS = false;
-    digitalWrite(triggers, HIGH);
-    pulsoOn = true;
-    tiempoPulso = t;
-  }
-  if (pulsoOn && (t - tiempoPulso >= 10)) {
-    digitalWrite(triggers, LOW);
-    pulsoOn = false;
-  }
+  Ultrasonicos();  
 
-  // procesar lectura
-  if (ready1) {
-    ready1 = false;
-
-    duracionD = endPulse1 - startPulse1;
-
-    distanciaD = duracionD * 0.0343f / 2.0f;
-
-    // tu condición corregida
-    if (distanciaD > 2 && distanciaD < 10) {
-      avanzar(1);
-    }
-  }
-
-  if (ready2) {
-    ready2 = false;
-
-    duracionF = endPulse2 - startPulse2;
-
-    distanciaF = duracionF * 0.0343f / 2.0f;
-
-    // tu condición corregida
-    if (distanciaF > 2 && distanciaF < 10) {
-      avanzar(1);
-    }
-  }
-
-  if (ready3) {
-    ready3 = false;
-
-    duracionA = endPulse3 - startPulse3;
-
-    distanciaA = duracionA * 0.0343f / 2.0f;
-
-    // tu condición corregida
-    if (distanciaA > 2 && distanciaA < 10) {
-      avanzar(1);
-    }
-  }
-
-  if (ready4) {
-    ready4 = false;
-
-    duracionI = endPulse4 - startPulse4;
-
-    distanciaI = duracionI * 0.0343f / 2.0f;
-
-    // tu condición corregida
-    if (distanciaI > 2 && distanciaI < 10) {
-      avanzar(1);
-    }
-  }
-
-  if (automatico == 1) {
+  if (automatico) {
     Mautomatico();
   }
   avanzarKeep();
@@ -571,22 +508,10 @@ void giro(int pulsos) {
 
 //DIRECCIONES
 
-void frente() {
-  digitalWrite(DirD, HIGH);
-  digitalWrite(DirI, LOW);
-}
-void reversa() {
-  digitalWrite(DirD, LOW);
-  digitalWrite(DirI, HIGH);
-}
-void zurdo() {
-  digitalWrite(DirD, HIGH);
-  digitalWrite(DirI, HIGH);
-}
-void diestro() {
-  digitalWrite(DirD, LOW);
-  digitalWrite(DirI, LOW);
-}
+void frente() {digitalWrite(DirD, HIGH);digitalWrite(DirI, LOW);}
+void reversa() {digitalWrite(DirD, LOW);digitalWrite(DirI, HIGH);}
+void zurdo() {digitalWrite(DirD, HIGH);digitalWrite(DirI, HIGH);}
+void diestro() {digitalWrite(DirD, LOW);digitalWrite(DirI, LOW);}
 
 //INTERRUPCIONES
 
@@ -632,19 +557,56 @@ void diestro() {
 
 //SENSORES
 
-void expansor() {
-}
+  void expansor() {
+  }
 
-void Ultrasonicos() {
-}
+  void Ultrasonicos() {
 
-void inclinacion() {
+    if (iniciarUS) {
+      iniciarUS = false;
+      digitalWrite(triggers, HIGH);
+      pulsoOn = true;
+      tiempoPulso = t;
+    }
+    if (pulsoOn && (t - tiempoPulso >= 10)) {
+      digitalWrite(triggers, LOW);
+      pulsoOn = false;
+    }
 
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
-  roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
-  pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
-}
+    if (ready1) {
+      ready1 = false;
+      duracionD = endPulse1 - startPulse1;
+      distanciaD = duracionD * 0.0343f / 2.0f;
+    }
+
+    if (ready2) {
+      ready2 = false;
+      duracionF = endPulse2 - startPulse2;
+      distanciaF = duracionF * 0.0343f / 2.0f;
+    }
+
+    if (ready3) {
+      ready3 = false;
+      duracionA = endPulse3 - startPulse3;
+      distanciaA = duracionA * 0.0343f / 2.0f;
+      }
+    }
+
+    if (ready4) {
+      ready4 = false;
+      duracionI = endPulse4 - startPulse4;
+      distanciaI = duracionI * 0.0343f / 2.0f;
+    }
+
+  }
+
+  void inclinacion() {
+
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    roll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
+    pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+  }
 
 void color() {
 
