@@ -1,0 +1,69 @@
+flowchart TD
+
+%% --- Usuario y Celular ---
+USUARIO([USUARIO]):::ext
+APP[Aplicación de celular]:::cel
+BT_CEL[Bluetooth]:::comm
+
+USUARIO --> APP --> BT_CEL
+
+%% --- Bot principal ---
+subgraph GrassyBot
+    subgraph Placa_Principal
+        ALIM[Alimentación]:::power
+        MCU[Microcontrolador]:::mcu
+        BT_MOD[Bluetooth]:::comm
+        COMU[Comunicación]:::comm
+        INT[Interrupciones]:::sensor
+        MOV[Módulo de Movimiento]:::act
+        GPS[GPS]:::geo
+        BRUJ[Brújula]:::geo
+        GYRO[Giroscopio]:::sensor
+        HALL[Sensores Efecto Hall]:::act
+    end
+
+    BAT[Batería]:::power
+    M_CUCH[Motor de Cuchilla]:::act
+    M_MOV[Motores de Movimiento]:::act
+    S_COLOR[Sensor de Color]:::sensor
+    S_ULTRA[Ultrasonido]:::sensor
+end
+
+%% --- Entradas externas ---
+INC[Inclinación]:::ext
+COLOR_ENT[Color]:::ext
+OBST[Obstáculo]:::ext
+
+%% Conexiones externas
+BT_CEL --> BT_MOD
+INC --> GYRO
+COLOR_ENT --> S_COLOR
+OBST --> S_ULTRA
+
+%% Conexiones internas
+BAT --> ALIM --> MCU
+
+MCU --> BT_MOD
+MCU --> COMU
+MCU --> INT
+MCU --> MOV
+MCU --> GPS
+MCU --> BRUJ
+
+INT --> GYRO
+INT --> S_COLOR
+INT --> S_ULTRA
+
+MOV --> M_CUCH
+MOV --> M_MOV
+MOV --> HALL
+
+%% Estilos
+classDef power fill:#a8b4ff,stroke:#333,stroke-width:1px;
+classDef mcu fill:#e8e1c8,stroke:#333;
+classDef comm fill:#8ac6ff,stroke:#333;
+classDef act fill:#ffa64d,stroke:#333;
+classDef sensor fill:#ff8a8a,stroke:#333;
+classDef geo fill:#ffb366,stroke:#333;
+classDef ext fill:#7ae37a,stroke:#333;
+classDef cel fill:#ffd34d,stroke:#333;
