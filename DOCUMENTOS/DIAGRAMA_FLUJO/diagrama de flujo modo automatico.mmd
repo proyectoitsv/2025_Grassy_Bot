@@ -1,0 +1,70 @@
+flowchart TD
+
+%% ==== SECCIÓN 1 ====
+
+A([Inicio]) --> B[/Ingrese tamaño del terreno/]
+B --> C[Crear patrón de movimiento]
+C --> D[Encender cuchillas]
+D --> E[Empezar recorrido]
+
+E --> F{¿Interrupción\ndetectada?}
+
+%% --- Interrupciones ---
+F -->|Sí| G{¿Inclinación\ndetectada?}
+F -->|No| Z1[Detectar Pasto]
+
+%% --- Inclinación ---
+G -->|Sí| H[Apagar cuchilla]
+H --> I[Apagar orugas]
+I --> J[Medir inclinación nuevamente]
+J --> K{¿Se restableció la\ninclinación mínima?}
+
+K -->|No| J
+K -->|Sí| L[/Ingrese si desea continuar/]
+L --> M{¿Continuar?}
+M -->|Sí| N[Reanudar Recorrido]
+N --> E
+M -->|No| F1([Fin])
+
+%% --- Obstáculo ---
+G -->|No| O{¿Obstáculo\ndetectado?}
+O -->|Sí| P[Apagar cuchilla]
+P --> Q[Apagar orugas]
+Q --> R[Detectar obstáculos nuevamente]
+R --> S{¿Obstáculo detectado?}
+
+S -->|Sí| R
+S -->|No| T{¿Pasto detectado?}
+
+%% --- Detección de pasto tras obstáculo ---
+T -->|No| U[Apagar cuchilla]
+U --> V[Detectar pasto nuevamente]
+V --> W{¿Pasto detectado?}
+W -->|Sí| X[Encender cuchilla]
+X --> CONT((Continuación))
+W -->|No| V
+
+T -->|Sí| X
+Z1 --> Z2{¿Pasto detectado?}
+Z2 -->|Sí| CONT
+Z2 -->|No| Z1
+
+%% ==== SECCIÓN 2 ====
+
+CONT --> AA[Sensar GPS]
+AA --> AB{¿Robot en la\nzona delimitada?}
+AB -->|No| AC[Iniciar modo seguro]
+AC --> F2([Fin])
+
+AB -->|Sí| AD[Sensar dirección con la brújula]
+AD --> AE{¿Dirección correcta?}
+
+AE -->|No| AF[Corregir la dirección]
+AF --> AD
+
+AE -->|Sí| AG[Continuar secuencia]
+AG --> AH[Sensar el recorrido con efecto hall]
+AH --> AI{¿Recorrido completado?}
+
+AI -->|Sí| F3([Fin])
+AI -->|No| F
