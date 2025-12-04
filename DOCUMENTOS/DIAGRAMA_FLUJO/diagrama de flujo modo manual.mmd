@@ -1,0 +1,39 @@
+flowchart TD
+
+    %% Inicio
+    A([Inicio]):::inicio --> B[/Espera instrucciones de movimiento/]
+
+    %% Encender y mover
+    B --> C[Encender cuchillas]
+    C --> D[Empezar movimiento]
+
+    %% Objeto detectado
+    D --> E{¿Obstáculo detectado?}
+    E -- Sí --> F[Apagar orugas]
+    F --> G[Apagar cuchilla]
+    G --> B
+
+    E -- No --> H{¿Alguien lo levantó?}
+
+    %% Levantado
+    H -- Sí --> G
+    H -- No --> I{¿Inclinación detectada?}
+
+    %% Inclinación
+    I -- Sí --> G
+    I -- No --> J[Continuar movimiento]
+
+    J --> K([Fin])
+
+    %% Estilos
+    classDef inicio fill:#6dd36d,stroke:#333;
+    classDef decision fill:#ff7f27,stroke:#333;
+    classDef proceso fill:#4da3ff,stroke:#000;
+    classDef espera fill:#ffe873,stroke:#000;
+    classDef fin fill:#ff4d4d,stroke:#000;
+
+    class B espera;
+    class E,H,I decision;
+    class C,D,F,G,J proceso;
+    class A inicio;
+    class K fin;
