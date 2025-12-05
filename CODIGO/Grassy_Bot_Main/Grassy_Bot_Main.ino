@@ -85,7 +85,8 @@ volatile bool iniciarUS = false;
 bool pulsoOn = false;
 uint64_t tiempoPulso = 0;
 uint64_t t_now = 0;
-
+int caminando = 0;
+unsigned long tiempopaso = 0;
 
 // Declaraciones de funciones
 void avanzar(int repeticiones);
@@ -168,8 +169,6 @@ void setup() {
 }
 
 void loop() {
-
-  unsigned long t = micros();
 
   Ultrasonicos();  
 
@@ -338,7 +337,7 @@ void loop() {
     cola.remove(0, 1);  // Eliminar la primera letra (shift)
   }
 
-  if (movpulsos > 0) {
+  if (movpulsos > 0 && caminando == 0) {
     if (comando == 'A') {
       avanzarN();
     } else if (comando == 'R') {
@@ -363,6 +362,31 @@ void loop() {
       SerialBT.flush();
     }
   }*/
+  
+  unsigned long tiempo = micros();
+
+  if(caminando == 4){
+    digitalWrite(StepD, HIGH);
+    digitalWrite(StepI, HIGH);
+    caminando = 3;
+    tiempopaso = tiempo;
+  }
+  else if(caminando == 3){
+    if (tiempo - tiempopaso >= 1000) {
+      caminando = 2;
+    }
+  }
+  else if(caminando == 2){
+    digitalWrite(StepD, LOW);
+    digitalWrite(StepI, LOW);
+    caminando = 1;
+    tiempopaso = tiempo;
+  }
+  else if(caminando == 1){
+    if (tiempo - tiempopaso >= 1000) {
+      caminando = 0;
+    }
+  }
 }
 
 
@@ -408,15 +432,39 @@ void derecha(int repeticiones) {
   }
 }
 
-void avanzarN() {frente();paso(1);}
-void retrocederN() { reversa();paso(1);}
-void izquierdaN() {zurdo(); giro(1);}
-void derechaN() {diestro();giro(1);}
-void avanzarKeep() {frente();if (dirkeep == 1) paso(1);}
-void retrocederKeep() {reversa();if (dirkeep == 2) paso(1);}
-void derechaKeep() { diestro();if (dirkeep == 3) giro(1);}
-void izquierdaKeep() {zurdo();if (dirkeep == 4) giro(1);}
+void avanzarN() {frente();caminando = 4;}
+void retrocederN() { reversa();caminando = 4;}
+void izquierdaN() {zurdo();caminando = 4;}
+void derechaN() {diestro();caminando = 4;}
 
+void avanzarKeep(){
+  if (dirkeep == 1){
+  frente();
+  paso(1); 
+  }
+} 
+
+void retrocederKeep() {
+  if (dirkeep == 1){
+  reversa();
+  paso(1); 
+  }
+}
+
+void derechaKeep() {
+  if (dirkeep == 1){
+  diestro();
+  giro(1); 
+  }
+}
+
+void izquierdaKeep() {
+  if (dirkeep == 1){
+  zurdo();
+  giro(1); 
+  }
+}
+ 
 void Mautomatico() {
 
   if (automatico == 0) {
@@ -562,6 +610,8 @@ void diestro() {digitalWrite(DirD, LOW);digitalWrite(DirI, LOW);}
 
   void Ultrasonicos() {
 
+  unsigned long t = micros();
+
     if (iniciarUS) {
       iniciarUS = false;
       digitalWrite(triggers, HIGH);
@@ -589,7 +639,6 @@ void diestro() {digitalWrite(DirD, LOW);digitalWrite(DirI, LOW);}
       ready3 = false;
       duracionA = endPulse3 - startPulse3;
       distanciaA = duracionA * 0.0343f / 2.0f;
-      }
     }
 
     if (ready4) {
