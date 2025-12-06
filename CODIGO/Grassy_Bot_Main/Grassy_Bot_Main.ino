@@ -365,24 +365,24 @@ void loop() {
   
   unsigned long tiempo = micros();
 
-  if(caminando == 4){
+  if(caminando == 4 && pausa == 0){
     digitalWrite(StepD, HIGH);
     digitalWrite(StepI, HIGH);
     caminando = 3;
     tiempopaso = tiempo;
   }
-  else if(caminando == 3){
+  else if(caminando == 3 && pausa == 0){
     if (tiempo - tiempopaso >= 1000) {
       caminando = 2;
     }
   }
-  else if(caminando == 2){
+  else if(caminando == 2 && pausa == 0){
     digitalWrite(StepD, LOW);
     digitalWrite(StepI, LOW);
     caminando = 1;
     tiempopaso = tiempo;
   }
-  else if(caminando == 1){
+  else if(caminando == 1 && pausa == 0){
     if (tiempo - tiempopaso >= 1000) {
       caminando = 0;
     }
@@ -645,6 +645,22 @@ void diestro() {digitalWrite(DirD, LOW);digitalWrite(DirI, LOW);}
       ready4 = false;
       duracionI = endPulse4 - startPulse4;
       distanciaI = duracionI * 0.0343f / 2.0f;
+    }
+
+    if(distanciaF < 10){
+      pausa = 1;
+    }
+    else if(distanciaD < 10){
+      pausa = 1;
+    }
+    else if(distanciaI < 10){
+      pausa = 1;
+    }
+    else if(distanciaA > 15){
+      pausa = 1;
+    }
+    else{
+      pausa = 0;
     }
 
   }
