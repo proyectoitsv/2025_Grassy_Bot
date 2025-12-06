@@ -34,7 +34,7 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
 - **GrassyBot**
   - Movimiento de Motores:✅
   - Sensor de Color:✅
-  - Sensores Ultrasonicos:⚠
+  - Sensores Ultrasonicos:✅
   - Giroscopio:✅
   - Brujula:⚠
   - GPS:⚠
@@ -46,4 +46,4 @@ Utiliza múltiples sensores para navegar, evitar obstáculos y mantener un corte
   - Afiches, Pancartas:❌
   - Elementos decorativos:❌
   - Luces:❌
-  - Video Publicitario:❌
+  - Video Publicitario:✅
